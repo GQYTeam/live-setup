@@ -1199,6 +1199,15 @@ if [ -n "${BASH_SOURCE[0]:-}" ] && [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
   return 0
 fi
 
+# ===== GQYOS 炫彩 logo（为顾清影而造）===== #
+_GQYOS_LOGO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/asses"
+if [[ -f "${_GQYOS_LOGO_DIR}/gqyos-logo-sunset.ansi" ]]; then
+  cat "${_GQYOS_LOGO_DIR}/gqyos-logo-sunset.ansi"
+else
+  printf '  ____  _____   _____  ____\n / ___|/ _ \ \ / / _ \/ ___|\n| |  _| | | \ V / | | \___ \ \
+| |_| | |_| || || |_| |___) |\n \____|\__\_\|_| \___/|____/\n'
+fi
+
 initialize_runtime "$@"
 debug_checkpoint "preflight_checks"
 run_preflight_checks
