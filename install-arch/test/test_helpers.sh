@@ -1,0 +1,197 @@
+#!/usr/bin/env bash
+# Test helper functions for install-arch.sh testing
+set -o nounset
+set -o pipefail
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Test counters
+TESTS_RUN=0
+TESTS_PASSED=0
+TESTS_FAILED=0
+
+# Test result tracking
+test_start() {
+  local test_name="$1"
+  echo -e "${YELLOW}TEST:${NC} $test_name"
+  TESTS_RUN=$((TESTS_RUN + 1))
+}
+
+test_pass() {
+  local test_name="$1"
+  echo -e "${GREEN}✓ PASS:${NC} $test_name"
+  TESTS_PASSED=$((TESTS_PASSED + 1))
+}
+
+test_fail() {
+  local test_name="$1"
+  local reason="${2:-}"
+  echo -e "${RED}✗ FAIL:${NC} $test_name"
+  if [ -n "$reason" ]; then
+    echo -e "  ${RED}Reason:${NC} $reason"
+  fi
+  TESTS_FAILED=$((TESTS_FAILED + 1))
+}
+
+# Assert functions
+assert_equals() {
+  local expected="$1"
+  local actual="$2"
+  local test_name="$3"
+  
+  test_start "$test_name"
+  if [ "$expected" = "$actual" ]; then
+    test_pass "$test_name"
+    return 0
+  else
+    test_fail "$test_name" "Expected '$expected', got '$actual'"
+    return 1
+  fi
+}
+
+assert_not_empty() {
+  local value="$1"
+  local test_name="$2"
+  
+  test_start "$test_name"
+  if [ -n "$value" ]; then
+    test_pass "$test_name"
+    return 0
+  else
+    test_fail "$test_name" "Value is empty"
+    return 1
+  fi
+}
+
+assert_empty() {
+  local value="$1"
+  local test_name="$2"
+  
+  test_start "$test_name"
+  if [ -z "$value" ]; then
+    test_pass "$test_name"
+    return 0
+  else
+    test_fail "$test_name" "Expected empty value, got '$value'"
+    return 1
+  fi
+}
+
+assert_contains() {
+  local haystack="$1"
+  local needle="$2"
+  local test_name="$3"
+  
+  test_start "$test_name"
+  if grep -F -q -- "$needle" <<< "$haystack"; then
+    test_pass "$test_name"
+    return 0
+  else
+    test_fail "$test_name" "String does not contain '$needle'"
+    return 1
+  fi
+}
+
+assert_not_contains() {
+  local haystack="$1"
+  local needle="$2"
+  local test_name="$3"
+
+  test_start "$test_name"
+  if ! grep -F -q -- "$needle" <<< "$haystack"; then
+    test_pass "$test_name"
+    return 0
+  else
+    test_fail "$test_name" "String unexpectedly contains '$needle'"
+    return 1
+  fi
+}
+
+assert_occurs_before() {
+  local haystack="$1"
+  local first="$2"
+  local second="$3"
+  local test_name="$4"
+  local first_line
+  local second_line
+
+  test_start "$test_name"
+  first_line=$(grep -F -n -- "$first" <<< "$haystack" | head -n 1 | cut -d: -f1 || true)
+  second_line=$(grep -F -n -- "$second" <<< "$haystack" | head -n 1 | cut -d: -f1 || true)
+
+  if [ -n "$first_line" ] && [ -n "$second_line" ] && [ "$first_line" -lt "$second_line" ]; then
+    test_pass "$test_name"
+    return 0
+  else
+    test_fail "$test_name" "Expected '$first' to appear before '$second'"
+    return 1
+  fi
+}
+
+assert_file_exists() {
+  local file="$1"
+  local test_name="$2"
+  
+  test_start "$test_name"
+  if [ -f "$file" ]; then
+    test_pass "$test_name"
+    return 0
+  else
+    test_fail "$test_name" "File '$file' does not exist"
+    return 1
+  fi
+}
+
+assert_command_success() {
+  local test_name="$1"
+  shift
+  local cmd=("$@")
+  
+  test_start "$test_name"
+  if "${cmd[@]}" > /dev/null 2>&1; then
+    test_pass "$test_name"
+    return 0
+  else
+    test_fail "$test_name" "Command failed: ${cmd[*]}"
+    return 1
+  fi
+}
+
+assert_command_fails() {
+  local test_name="$1"
+  shift
+  local cmd=("$@")
+  
+  test_start "$test_name"
+  if ! "${cmd[@]}" > /dev/null 2>&1; then
+    test_pass "$test_name"
+    return 0
+  else
+    test_fail "$test_name" "Command succeeded when it should have failed: ${cmd[*]}"
+    return 1
+  fi
+}
+
+# Print test summary
+print_test_summary() {
+  echo ""
+  echo "========================================"
+  echo "Test Summary"
+  echo "========================================"
+  echo "Tests run:    $TESTS_RUN"
+  echo -e "Tests passed: ${GREEN}$TESTS_PASSED${NC}"
+  echo -e "Tests failed: ${RED}$TESTS_FAILED${NC}"
+  echo "========================================"
+  
+  if [ "$TESTS_FAILED" -eq 0 ]; then
+    echo -e "${GREEN}All tests passed!${NC}"
+    return 0
+  else
+    echo -e "${RED}Some tests failed!${NC}"
+    return 1
+  fi
+}

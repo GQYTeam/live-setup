@@ -1,0 +1,22 @@
+{
+  // Shell script specific settings
+  "files.associations": {
+    "*.sh": "shellscript"
+  },
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  // Editor settings for shell scripts
+  "[shellscript]": {
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": null
+  },
+  // Search exclusions
+  "search.exclude": {
+    "**/*.log": true,
+    "**/node_modules": true
+  },
+}

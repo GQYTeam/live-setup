@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Syntax, ShellCheck, and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Run syntax checks
+        run: bash -n install-arch.sh test/*.sh
+
+      - name: Run ShellCheck
+        run: shellcheck install-arch.sh test/*.sh
+
+      - name: Run unit tests
+        run: ./test/unit_tests.sh
+
+  integration-test:
+    name: Arch Linux loop-device integration test
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: archlinux:latest
+      options: --privileged
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Update Arch Linux and install dependencies
+        run: pacman -Syu --noconfirm util-linux
+
+      - name: Run integration test
+        run: ./test/integration_test.sh

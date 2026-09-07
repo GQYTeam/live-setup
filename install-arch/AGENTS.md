@@ -1,0 +1,70 @@
+# Agent Instructions for install-arch
+
+## Repository context
+
+This repository contains `install-arch.sh`, a destructive Arch Linux installer
+that provisions encrypted LVM, users, bootloader configuration, system services,
+and dotfiles. Treat changes as safety-critical: a bad edit can destroy data or
+leave a machine unbootable.
+
+## Always-on principles
+
+- Prefer small, behavior-preserving changes unless the user explicitly asks for
+  a behavior change.
+- Preserve `--dry-run` behavior and keep `--test-mode` non-destructive by
+  default.
+- Keep shell code ShellCheck-clean, quote variables, avoid `eval`, and fail
+  loudly instead of silently continuing after invalid input.
+- Never test destructive operations on a real disk. Use dry-run, containers,
+  VMs, or disposable loop devices. Destructive test mode requires its explicit
+  opt-in flag and complete `TEST_MODE_*` input.
+- Cleanup may release only resources acquired by the current installer or test
+  run; track ownership instead of acting on names merely because they exist.
+- Unit tests must source production helpers and package arrays rather than
+  maintaining test-only copies.
+- Update `README.md`, tests, and CI expectations when user-visible behavior,
+  paths, package lists, or validation commands change.
+- Do not commit secrets, passwords, machine-specific credentials, or private
+  configuration.
+
+## Repo-specific skills
+
+Detailed guidance is split into focused skills under `.agents/skills/`:
+
+- `arch-installer-safety`: use when changing disk, encryption, LVM, boot,
+  chroot, sudo, user, service, or other safety-sensitive installer behavior.
+- `arch-installer-testing`: use when validating installer changes, updating
+  tests, or working with dry-run/test-mode/integration-test flows.
+- `arch-installer-maintenance`: use when adding features, changing packages,
+  working with dialog prompts, dotfiles integration, docs, or repo workflow.
+
+## Project structure
+
+```text
+.
+├── install-arch.sh
+├── test/
+│   ├── unit_tests.sh
+│   ├── integration_test.sh
+│   └── test_helpers.sh
+├── .agents/
+│   └── skills/
+├── .github/
+│   ├── workflows/ci.yml
+│   └── pull_request_template.md
+├── AGENTS.md
+└── README.md
+```
+
+## Current validation commands
+
+Run the smallest relevant subset, usually:
+
+```bash
+bash -n install-arch.sh test/*.sh
+shellcheck install-arch.sh test/*.sh
+./test/unit_tests.sh
+```
+
+Use `sudo ./test/integration_test.sh` only when root/loop-device access is
+available and appropriate.
