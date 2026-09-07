@@ -23,13 +23,13 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Run syntax checks
-        run: bash -n install-arch.sh test/*.sh
+        run: bash -n install-arch/install-arch.sh install-arch/test/*.sh
 
       - name: Run ShellCheck
-        run: shellcheck install-arch.sh test/*.sh
+        run: shellcheck install-arch/install-arch.sh install-arch/test/*.sh
 
       - name: Run unit tests
-        run: ./test/unit_tests.sh
+        run: ./install-arch/test/unit_tests.sh
 
   integration-test:
     name: Arch Linux loop-device integration test
@@ -47,4 +47,4 @@ jobs:
         run: pacman -Syu --noconfirm util-linux
 
       - name: Run integration test
-        run: ./test/integration_test.sh
+        run: ./install-arch/test/integration_test.sh
